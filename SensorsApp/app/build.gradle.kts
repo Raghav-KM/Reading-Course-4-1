@@ -4,11 +4,11 @@ plugins {
 
 android {
     namespace = "com.example.rc_sensor_app"
-    compileSdk = 34
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.example.rc_sensor_app"
-        minSdk = 24
+        minSdk = 21
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
