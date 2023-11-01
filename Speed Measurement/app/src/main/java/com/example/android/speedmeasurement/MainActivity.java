@@ -21,6 +21,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private boolean isSpeedometerRunning = false;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int UPDATE_INTERVAL = 1000; // Update speed every second
+    private static final float ALPHA = 0.2f; // Low-pass filter coefficient
+
+    private Location lastLocation;
 
     public MainActivity() {
     }
@@ -46,11 +50,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        if (location==null){
+        if (location == null) {
             speedTextView.setText("Speed: -.- km/h");
         } else {
-            float nCurrentSpeed = location.getSpeed() * 3.6f;
-            speedTextView.setText(String.format("%.2f", nCurrentSpeed)+ " km/h" );
+            float nCurrentSpeed = location.getSpeed() * 3.6f; // Convert speed to km/h
+
+            // Use a low-pass filter to smooth speed readings
+            if (lastLocation != null) {
+                nCurrentSpeed = (ALPHA * nCurrentSpeed) + ((1 - ALPHA) * lastLocation.getSpeed() * 3.6f);
+            }
+
+            if (nCurrentSpeed >= 0) {
+                speedTextView.setText(String.format("Speed: %.2f km/h", nCurrentSpeed));
+            } else {
+                speedTextView.setText("Speed: -.- km/h");
+            }
+
+            lastLocation = location;
         }
     }
 
@@ -70,7 +86,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
+            // Use the best available location provider for accuracy
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, this);
             isSpeedometerRunning = true;
             button.setText("Stop");
         }
@@ -81,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         isSpeedometerRunning = false;
         button.setText("Start");
         speedTextView.setText("Speed: -.- km/h");
+        lastLocation = null;
     }
 
     @Override
